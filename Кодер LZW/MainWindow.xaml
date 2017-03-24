@@ -1,0 +1,23 @@
+﻿<Window x:Class="Кодер_LZW.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Кодер_LZW"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="538.395" Width="832.613">
+    <Canvas>
+        <ScrollViewer Height="199" Canvas.Left="10" Canvas.Top="10" Width="553">
+            <TextBox x:Name="inputTxtBox" Height="Auto" TextWrapping="Wrap" Text="Input text" Width="Auto" IsReadOnly="True"/>
+        </ScrollViewer>
+        <ScrollViewer Height="233" Canvas.Left="10" Canvas.Top="214" Width="553" Background="#FFF7F7F7">
+            <TextBlock x:Name="outputTxtBlock" TextWrapping="Wrap" Text="Output text"/>
+        </ScrollViewer>
+        <Button x:Name="encodeBtn" Content="Кодировать" Canvas.Left="10" Canvas.Top="468" Width="80" Height="21" Click="encodeBtn_Click"/>
+        <Button x:Name="chooseFileBtn" Content="Выбрать файл" Canvas.Left="95" Canvas.Top="469" Width="93" Click="chooseFileBtn_Click"/>
+        <ScrollViewer Height="395" Canvas.Left="568" Canvas.Top="52" Width="247" Background="#FFFFFDCA">
+            <TextBlock x:Name="codeTableTxtBlock" TextWrapping="Wrap" Text="Code table"/>
+        </ScrollViewer>
+        <Label x:Name="label" Content="Таблица цепочек" Canvas.Left="628" Canvas.Top="10" FontSize="16"/>
+    </Canvas>
+</Window>
