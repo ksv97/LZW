@@ -19,11 +19,11 @@ namespace Кодер_LZW
         /// <summary>
         /// Поток вывода данных в файл
         /// </summary>
-        private StreamWriter sWriter = File.AppendText("outputLog.txt");
+        private BinaryWriter bWriter = new BinaryWriter(File.OpenWrite("outputLog.txt"));
 
         public List<byte> Bits { private set; get; }
-        public int CurrentByte { private set; get; }
-        public int CurrentBit { private set; get; }
+        public byte CurrentByte { private set; get; }
+        public byte CurrentBit { private set; get; }
         
         public Bufer (byte size)
         {
@@ -61,7 +61,7 @@ namespace Кодер_LZW
 
             }
             Output(); // вывести буфер в выходной поток
-            sWriter.Close();
+            bWriter.Close();
         }
 
         private void MainWindow_BufferBytesChanged()
@@ -88,11 +88,11 @@ namespace Кодер_LZW
             foreach (byte b in Bits)
             {
                 //SendByteToOutput?.Invoke(b, CurrentBit);
-                CurrentByte += b * (int)Math.Pow(2, CurrentBit);
+                CurrentByte += (byte)(b * (int)Math.Pow(2, CurrentBit));
                 if (++CurrentBit == 8)
                 {
-                    sWriter.Write(CurrentByte);
-                    sWriter.Write(" ");
+                    bWriter.Write(CurrentByte);
+                    //sWriter.Write(" ");
                     CurrentBit = 0;
                     CurrentByte = 0;
                 }

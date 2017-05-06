@@ -316,19 +316,19 @@ namespace Кодер_LZW
                     
                     //inputTxtBox.Text = "Поток байтов из файла: " + Environment.NewLine;
 
-                    using (StreamWriter sWriter = File.CreateText("inputLog.txt"))
+                    using (BinaryWriter bWriter = new BinaryWriter(File.Create("inputLog.txt")))
                     {                        
                         
                         int bitCounter = 0;
                         foreach (byte b in fileBytes)
                         {
-                            sWriter.Write(b + " ");
+                            bWriter.Write(b);
                             //inputTxtBox.Text += b + " ";
                             bitCounter += 8;
                         }
-                        sWriter.WriteLine();
-                        sWriter.WriteLine("Длина исходного файла - " + fileBytes.Length + " байт = " + bitCounter + " бит");
-                        //inputTxtBox.Text += Environment.NewLine + "Длина исходного файла - " + fileBytes.Length + " байт = " + bitCounter + " бит";
+                        //sWriter.WriteLine();
+                        //sWriter.WriteLine("Длина исходного файла - " + fileBytes.Length + " байт = " + bitCounter + " бит");
+                        inputTxtBox.Text = "Длина исходного файла - " + (fileBytes.Length / 1024).ToString() + "Кбайт = " + fileBytes.Length + " байт = " + bitCounter + " бит";
                     }
 
                     
