@@ -38,6 +38,8 @@ namespace Кодер_LZW
         byte[] lastCodeOfChain; // ничто иное как результат логической инкрементации последнего кода в таблице
         byte[] fileBytes; // байты, считанные из файла
         List<Code> codeTable;
+        
+        
 
         public MainWindow()
         {
@@ -109,8 +111,15 @@ namespace Кодер_LZW
                     countOfBitsEncoded += 8;
                 }
             }
-            InputStreamEnded?.Invoke();
-            buffer.CloseStream();
+            try
+            {
+                InputStreamEnded?.Invoke();
+            }
+            catch (ApplicationException ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            
             outputTxtBlock.Text += Environment.NewLine + "Длина закодированного файла - " + countOfBitsEncoded / 8 + " байт = " + countOfBitsEncoded + " бит";
         }
 
@@ -169,7 +178,7 @@ namespace Кодер_LZW
                     }
                 }
             }
-            return null; // после проверки всей тааблицы вернуть false (не нашли ничего)
+            return null; // после проверки всей таблицы вернуть false (не нашли ничего)
         }
 
         public bool SearchChainInCodeTable (List<byte> chain)

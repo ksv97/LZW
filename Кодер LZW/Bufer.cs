@@ -37,12 +37,30 @@ namespace Кодер_LZW
 
         private void MainWindow_InputStreamEnded()
         {            
-            byte countOfFilledBytes = (byte)(Bits.Count / 8); 
-            // найти позицию, с которой начинается незаконченный байт (остаток от деления на 8?)
-            // определить, сколько бит заполнено в незаполненном байте, и запомнить это число
-            // дописать в конец фиктивные нули
-            // вывести буфер в выходной поток
-            // добавить в конец выходного потока байт, который задан switch'ем
+            byte countOfFilledBitsInLastByte = (byte)(Bits.Count % 8); // найти количество бит в незаполненном байте
+            if (countOfFilledBitsInLastByte != 0) // если последний байт не заполнен
+            {
+                // дописать в конец фиктивные нули
+                for (CurrentBit = 0; CurrentBit < 8 - countOfFilledBitsInLastByte; CurrentBit++)
+                {
+                    Bits.Add(0);
+                }
+                byte[] lastByteMask;
+                switch (countOfFilledBitsInLastByte) // сгенерировать маску последнего байта
+                {
+                    case 1: lastByteMask = new byte[8] { 1, 0, 0, 0, 0, 0, 0, 0 }; break;
+                    case 2: lastByteMask = new byte[8] { 0, 1, 0, 0, 0, 0, 0, 0 }; break;
+                    case 3: lastByteMask = new byte[8] { 0, 0, 1, 0, 0, 0, 0, 0 }; break;
+                    case 4: lastByteMask = new byte[8] { 0, 0, 0, 1, 0, 0, 0, 0 }; break;
+                    case 5: lastByteMask = new byte[8] { 0, 0, 0, 0, 1, 0, 0, 0 }; break;
+                    case 6: lastByteMask = new byte[8] { 0, 0, 0, 0, 0, 1, 0, 0 }; break;
+                    case 7: lastByteMask = new byte[8] { 0, 0, 0, 0, 0, 0, 1, 0 }; break;
+                    default: throw new ApplicationException("Bad Count Of Filled Bits In Last Byte");
+                }
+                Bits.AddRange(lastByteMask);
+
+            }
+            Output(); // вывести буфер в выходной поток
             sWriter.Close();
         }
 
