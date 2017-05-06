@@ -17,18 +17,24 @@ using System.IO;
 
 namespace Кодер_LZW
 {
+    // BUG: не выводит output log в файл
+
     /// <summary>
     /// Логика взаимодействия для MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window
     {
+        public static event Action BufferBytesChanged;
+        public static event Action InputStreamEnded;
+
         public struct Code
         {
             public List<byte> Chain;
             public byte[] CodeOfChain;
         }
 
-        int lengthOfCode = 12; // Величина максимального кода.
+        const int maxLengthOfCode = 11;
+        const byte bufferSize = 6;  // размер буфера в байтах      
         byte[] lastCodeOfChain; // ничто иное как результат логической инкрементации последнего кода в таблице
         byte[] fileBytes; // байты, считанные из файла
         List<Code> codeTable;
@@ -39,12 +45,14 @@ namespace Кодер_LZW
             inputTxtBox.Text = "";
             outputTxtBlock.Text = "";
             codeTableTxtBlock.Text = "";
-            //InitialiseCodeTable();
-            //PrintCodeTable();
+
         }
 
         public void Encode ()
-        {            
+        {
+            Bufer buffer = new Bufer(bufferSize);
+            buffer.SendByteToOutput += Buffer_SendByteToOutput;
+
             InitialiseCodeTable(); // Сформировать корневую часть таблицы цепочек
             List<byte> prefix = new List<byte>(); // префикс = пустая строка
             int countOfBitsEncoded = 0; // подсчет количества бит при кодировании
@@ -63,12 +71,23 @@ namespace Кодер_LZW
                 else
                 {
                     byte[] outputCode = FindCodeOfChain(prefix);
-                    OutputCodeOfChain(outputCode); // вывести код префикса в выходной поток
+                    OutputCodeOfChain(outputCode, buffer); // вывести код префикса в выходной поток, используя буфер
+                    //OutputCodeOfChain(outputCode); // вывести код префикса в выходной поток
+
+                    // Исключить переполнение таблицы цепочек. Удалить динамическую часть таблицы при достижении максимума
+                    // BUG! TEST!
+                    if (codeTable.Count == maxLengthOfCode * 256)
+                    {
+                        codeTable.RemoveRange(256, codeTable.Count - 256); // удалить все цепочки длины больше 1
+                        lastCodeOfChain = new byte[] { 1, 0, 0, 0, 0, 0, 0, 0, 0};
+                    }
+
                     Code code = new Code(); // создать новый код
                     code.Chain = new List<byte>();
                     code.Chain = prefixWithCurrentSymbol.GetRange(0, prefixWithCurrentSymbol.Count); // кодируемая цепочка равна цепочке префикс + символ
                     code.CodeOfChain = new byte[lastCodeOfChain.Length]; // длина создаваемого массива равна длине последнего кода (т.к. он уже инкрементирован под нужное значение)
                     lastCodeOfChain.CopyTo(code.CodeOfChain, 0); // новый код равен логической инкрементации предыдущего кода в таблице (т.е. lastCodeOfChain)
+
                     codeTable.Add(code); // Добавить код для цепочки "префикс + символ" в таблицу кодов цепочек
 
                     countOfBitsEncoded += outputCode.Length; // инкрементировать количество бит
@@ -82,25 +101,51 @@ namespace Кодер_LZW
 
                 if (currentByte == fileBytes.ElementAt(fileBytes.Length - 1)) // если последний символ
                 {
-                    
-                    OutputCodeOfChain(FindCodeOfChain(new List<byte>() { currentByte })); // найти код в таблице для цепочки последнего байта и вывести в выходной поток
+                    // найти код в таблице для цепочки последнего байта и вывести в выходной поток с использованием буфера
+                    OutputCodeOfChain(FindCodeOfChain(new List<byte>() { currentByte }), buffer);
+
+                    // найти код в таблице для цепочки последнего байта и вывести в выходной поток
+                    //OutputCodeOfChain(FindCodeOfChain(new List<byte>() { currentByte })); 
                     countOfBitsEncoded += 8;
                 }
             }
+            InputStreamEnded?.Invoke();
+            buffer.CloseStream();
             outputTxtBlock.Text += Environment.NewLine + "Длина закодированного файла - " + countOfBitsEncoded / 8 + " байт = " + countOfBitsEncoded + " бит";
         }
 
+        private void Buffer_SendByteToOutput(byte currBit, int bitOfCurrentByte)
+        {
+            outputTxtBlock.Text += currBit;
+            if (bitOfCurrentByte == 7) outputTxtBlock.Text += "|";
+        }
+
+        /// <summary>
+        /// Версия аутпута, выводящая просто символы из таблицы.
+        /// </summary>
+        /// <param name="codeOfChain"></param>
         public void OutputCodeOfChain (byte[] codeOfChain)
         {
-            //int countOfSymbolsForSpacing = codeOfChain.Length;
+
             foreach (byte b in codeOfChain)
-            {
-                outputTxtBlock.Text += b;
-                //countOfSymbolsForSpacing--;
-                //if (countOfSymbolsForSpacing % 8 == 0 && countOfSymbolsForSpacing != 0)
-                //    outputTxtBlock.Text += " ";
+            {                
+                outputTxtBlock.Text += b;                
             }
             outputTxtBlock.Text += " ";
+        }
+
+        /// <summary>
+        /// Версия аутпута, работающая с буфером. Пока находится в разработке 
+        /// </summary>
+        /// <param name="codeOfChain"></param>
+        /// <param name="buffer"></param>
+        public void OutputCodeOfChain(byte[] codeOfChain, Bufer buffer)
+        {
+            foreach (byte b in codeOfChain)
+            {
+                buffer.Bits.Add(b);
+                BufferBytesChanged?.Invoke();             
+            }
         }
 
         public byte[] FindCodeOfChain (List<byte> chain)
@@ -237,26 +282,47 @@ namespace Кодер_LZW
         }
 
         private void chooseFileBtn_Click(object sender, RoutedEventArgs e)
-        {            
+        {
+            codeTableTxtBlock.Text = "";
+            inputTxtBox.Text = "";
+            outputTxtBlock.Text = "";
+
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Multiselect = false;
             openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop); // установка позиции выбора файла на адрес рабочего стола
             
             if (openFileDialog.ShowDialog() == true)
-            {
-                //FileStream myStream;
+            {                
                 try
-                {
-                    //myStream = new FileStream(openFileDialog.FileName, FileMode.Open, FileAccess.Read);
+                {                    
                     fileBytes = File.ReadAllBytes(openFileDialog.FileName);
-                    inputTxtBox.Text = "Поток байтов из файла: " + Environment.NewLine;
-                    int bitCounter = 0;
-                    foreach (byte b in fileBytes)
+                    try
                     {
-                        inputTxtBox.Text += b + " ";
-                        bitCounter += 8;
+                        File.Delete("outputLog.txt");
                     }
-                    inputTxtBox.Text += Environment.NewLine + "Длина исходного файла - " + fileBytes.Length + " байт = " + bitCounter + " бит";
+                    catch (FileNotFoundException ex)
+                    {
+                        MessageBox.Show(ex.Message + " at " + ex.Source);
+                    }
+                    
+                    //inputTxtBox.Text = "Поток байтов из файла: " + Environment.NewLine;
+
+                    using (StreamWriter sWriter = File.CreateText("inputLog.txt"))
+                    {                        
+                        
+                        int bitCounter = 0;
+                        foreach (byte b in fileBytes)
+                        {
+                            sWriter.Write(b + " ");
+                            //inputTxtBox.Text += b + " ";
+                            bitCounter += 8;
+                        }
+                        sWriter.WriteLine();
+                        sWriter.WriteLine("Длина исходного файла - " + fileBytes.Length + " байт = " + bitCounter + " бит");
+                        //inputTxtBox.Text += Environment.NewLine + "Длина исходного файла - " + fileBytes.Length + " байт = " + bitCounter + " бит";
+                    }
+
+                    
                     
                 }
                 catch (Exception ex)
