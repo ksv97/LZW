@@ -71,11 +71,17 @@ namespace Кодер_LZW
                     // Исключить переполнение таблицы цепочек. Удалить динамическую часть таблицы при достижении максимума
                     if (codeTable.Count == maxLengthOfCode * 256)
                     {
-                        foreach (List<byte> chain in codeTable.Keys)
+                        // удаление всех записей длиной больше двух
+                        for (int i = 256; i < codeTable.Keys.Count; i++)
                         {
-                            if (chain.Count > 1)
-                                codeTable.Remove(chain);
+                            List<byte> key = codeTable.Keys.ElementAt(i);                            
+                            codeTable.Remove(key);                                
                         }
+                        //foreach (List<byte> chain in codeTable.Keys)
+                        //{
+                        //    if (chain.Count > 1)
+                        //        codeTable.Remove(chain);
+                        //}
                         lastCodeOfChain = new byte[] { 1, 0, 0, 0, 0, 0, 0, 0, 0};
                     }
 
@@ -122,20 +128,6 @@ namespace Кодер_LZW
         {
             outputTxtBlock.Text += currBit;
             if (bitOfCurrentByte == 7) outputTxtBlock.Text += "|";
-        }
-
-        /// <summary>
-        /// Версия аутпута, выводящая просто символы из таблицы.
-        /// </summary>
-        /// <param name="codeOfChain"></param>
-        public void OutputCodeOfChain (byte[] codeOfChain)
-        {
-
-            foreach (byte b in codeOfChain)
-            {                
-                outputTxtBlock.Text += b;                
-            }
-            outputTxtBlock.Text += " ";
         }
 
         /// <summary>
@@ -202,12 +194,11 @@ namespace Кодер_LZW
 
         public void InitialiseCodeTable ()
         {
-            codeTable = new Dictionary<List<byte>, byte[]>(256);
+            codeTable = new Dictionary<List<byte>, byte[]>(256,new ListEqualityComparer());
             lastCodeOfChain = new byte[8] { 0, 0, 0, 0, 0, 0, 0, 0 }; // инициализация кода первого байта = все нули
             for (byte i = 0; i <= byte.MaxValue; i++)
             {
-                List<byte> chain = new List<byte>();
-                chain.Add(i); 
+                List<byte> chain = new List<byte>() { i };                
                 byte[] codeOfChain = new byte[8];
                 lastCodeOfChain.CopyTo(codeOfChain, 0); // копирование битов последнего кода к текущему коду
                 codeTable.Add(chain, codeOfChain); // добавление нового кода в таблицу кодов
@@ -264,26 +255,22 @@ namespace Кодер_LZW
             return array;
         }
 
-        //public void PrintCodeTable ()
-        //{
-        //    foreach (Code code in codeTable)
-        //    {
-        //        foreach (byte byteOfChain in code.Chain)
-        //        {
-        //            codeTableTxtBlock.Text += byteOfChain + " ";
-        //        }
-        //        codeTableTxtBlock.Text += " = ";
-        //        int counterForSpacing = code.CodeOfChain.Length;
-        //        foreach (byte bit in code.CodeOfChain)
-        //        {
-        //            codeTableTxtBlock.Text += bit;
-        //            counterForSpacing--;
-        //            if (counterForSpacing % 8 == 0 && counterForSpacing != 0)
-        //                codeTableTxtBlock.Text += " ";
-        //        }
-        //        codeTableTxtBlock.Text += Environment.NewLine;
-        //    }
-        //}
+        public void PrintCodeTable()
+        {
+            for (int i = 0; i < codeTable.Count; i++)
+            {
+                foreach (byte byteOfChain in codeTable.ElementAt(i).Key)
+                {
+                    codeTableTxtBlock.Text += byteOfChain + " ";
+                }
+                codeTableTxtBlock.Text += " = ";                
+                foreach (byte bit in codeTable.ElementAt(i).Value)
+                {
+                    codeTableTxtBlock.Text += bit;                    
+                }
+                codeTableTxtBlock.Text += Environment.NewLine;
+            }
+        }
 
         private void chooseFileBtn_Click(object sender, RoutedEventArgs e)
         {
@@ -291,10 +278,11 @@ namespace Кодер_LZW
             inputTxtBox.Text = "";
             outputTxtBlock.Text = "";
 
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Multiselect = false;
-            openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop); // установка позиции выбора файла на адрес рабочего стола
-            
+            OpenFileDialog openFileDialog = new OpenFileDialog()
+            {
+                Multiselect = false,
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) // установка позиции выбора файла на адрес рабочего стола
+            };
             if (openFileDialog.ShowDialog() == true)
             {                
                 try
@@ -340,7 +328,7 @@ namespace Кодер_LZW
         {
             outputTxtBlock.Text = "";
             Encode();
-           // PrintCodeTable();
+            PrintCodeTable();
         }
     }
 }
