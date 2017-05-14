@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Кодер_LZW"
         mc:Ignorable="d"
-        Title="MainWindow" Height="538.395" Width="832.613">
+        Title="MainWindow" Height="538.395" Width="832.613"
+        >
     <Canvas>
         <ScrollViewer Height="199" Canvas.Left="10" Canvas.Top="10" Width="553">
             <TextBox x:Name="inputTxtBox" Height="Auto" TextWrapping="Wrap" Text="Input text" Width="Auto" IsReadOnly="True"/>
@@ -19,5 +20,6 @@
             <TextBlock x:Name="codeTableTxtBlock" TextWrapping="Wrap" Text="Code table"/>
         </ScrollViewer>
         <Label x:Name="label" Content="Таблица цепочек" Canvas.Left="628" Canvas.Top="10" FontSize="16"/>
+        <ProgressBar  Name="pgBarEncoding" Height="15" Canvas.Left="639" Canvas.Top="475" Width="170"/>
     </Canvas>
 </Window>

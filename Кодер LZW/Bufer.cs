@@ -1,16 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Windows;
 
 namespace Кодер_LZW
 {
     public class Bufer
     {
-        /// <summary>
-        /// Событие, отправляющее байт в выходной поток
-        /// </summary>
-        public event Action<byte, int> SendByteToOutput;
-
         /// <summary>
         /// Размер буфера в байтах
         /// </summary>
@@ -59,10 +55,12 @@ namespace Кодер_LZW
                     default: throw new ApplicationException("Bad Count Of Filled Bits In Last Byte");
                 }
                 Bits.AddRange(lastByteMask);
-
+                //MessageBox.Show(this.GetHashCode().ToString() + " in InputStreamEnded");
             }
             Output(); // вывести буфер в выходной поток
-            bWriter.Close();
+            MainWindow.BufferBytesChanged -= MainWindow_BufferBytesChanged;
+            MainWindow.BufferBytesChanged -= MainWindow_InputStreamEnded;            
+            bWriter.Dispose();
         }
 
         private void MainWindow_BufferBytesChanged()
@@ -88,12 +86,11 @@ namespace Кодер_LZW
             CurrentByte = 0;
             foreach (byte b in Bits)
             {
-                //SendByteToOutput?.Invoke(b, CurrentBit);
                 CurrentByte += (byte)(b * (int)Math.Pow(2, CurrentBit));
                 if (++CurrentBit == 8)
                 {
+                   // MessageBox.Show(this.GetHashCode().ToString() + " in Output");
                     bWriter.Write(CurrentByte);
-                    //sWriter.Write(" ");
                     CurrentBit = 0;
                     CurrentByte = 0;
                 }
