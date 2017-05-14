@@ -6,6 +6,7 @@ using System.Threading;
 using System.Windows;
 using System.ComponentModel;
 using System.Windows.Controls;
+using System.Diagnostics;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -61,14 +62,16 @@ namespace Кодер_LZW
         {
             UpdateProgressBarDelegate updProgress = new UpdateProgressBarDelegate(pgBarEncoding.SetValue); // создать объект делегата обновления прогресс-бара           
 
-            Timers.Timer timer = new Timers.Timer(1000);
+            Stopwatch stopwatch = new Stopwatch();
+            //Timers.Timer timer = new Timers.Timer(1000);
             
             Bufer buffer = new Bufer(bufferSize, filePath);
             //MessageBox.Show(buffer.GetHashCode().ToString() + " in Encode");
 
-            timer.Elapsed += Timer_Elapsed;
-            timer.Start();
+            //timer.Elapsed += Timer_Elapsed;
+            //timer.Start();
 
+            stopwatch.Start();
             InitialiseCodeTable(); // Сформировать корневую часть таблицы цепочек
             List<byte> prefix = new List<byte>(); // префикс = пустая строка
 
@@ -140,7 +143,9 @@ namespace Кодер_LZW
             {
                 MessageBox.Show(ex.Message);
             }
-            timer.Stop();
+            stopwatch.Stop();
+            timeOfEncoding = (int)stopwatch.ElapsedMilliseconds / 1000;
+            //timer.Stop();
          
         }
 
