@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Timers;
 using Microsoft.Win32;
 using System.IO;
 
@@ -30,7 +31,8 @@ namespace Кодер_LZW
         const int maxLengthOfCode = 11;
         const byte bufferSize = 6;  // размер буфера в байтах      
         byte[] lastCodeOfChain; // ничто иное как результат логической инкрементации последнего кода в таблице
-        byte[] fileBytes; // байты, считанные из файла
+        byte[] fileBytes; // байты, считанные из файла 
+        int timeOfEncoding;
         Dictionary<List<byte>, byte[]> codeTable;                 
 
         public MainWindow()
@@ -44,7 +46,8 @@ namespace Кодер_LZW
 
         public void Encode ()
         {
-            Bufer buffer = new Bufer(bufferSize);
+            string filePath = "outputLog.txt";
+            Bufer buffer = new Bufer(bufferSize, filePath);
             buffer.SendByteToOutput += Buffer_SendByteToOutput;
 
             InitialiseCodeTable(); // Сформировать корневую часть таблицы цепочек
@@ -66,7 +69,6 @@ namespace Кодер_LZW
                 {
                     byte[] outputCode = codeTable[prefix];
                     OutputCodeOfChain(outputCode, buffer); // вывести код префикса в выходной поток, используя буфер
-                    //OutputCodeOfChain(outputCode); // вывести код префикса в выходной поток
 
                     // Исключить переполнение таблицы цепочек. Удалить динамическую часть таблицы при достижении максимума
                     if (codeTable.Count == maxLengthOfCode * 256)
@@ -77,11 +79,6 @@ namespace Кодер_LZW
                             List<byte> key = codeTable.Keys.ElementAt(i);                            
                             codeTable.Remove(key);                                
                         }
-                        //foreach (List<byte> chain in codeTable.Keys)
-                        //{
-                        //    if (chain.Count > 1)
-                        //        codeTable.Remove(chain);
-                        //}
                         lastCodeOfChain = new byte[] { 1, 0, 0, 0, 0, 0, 0, 0, 0};
                     }
 
@@ -106,9 +103,6 @@ namespace Кодер_LZW
                     
                     // найти код в таблице для цепочки последнего байта и вывести в выходной поток с использованием буфера
                     OutputCodeOfChain(codeTable[new List<byte>() { currentByte }], buffer);
-
-                    // найти код в таблице для цепочки последнего байта и вывести в выходной поток
-                    //OutputCodeOfChain(FindCodeOfChain(new List<byte>() { currentByte })); 
                     countOfBitsEncoded += 8;
                 }
             }
@@ -119,9 +113,14 @@ namespace Кодер_LZW
             catch (ApplicationException ex)
             {
                 MessageBox.Show(ex.Message);
-            }
-            
-            outputTxtBlock.Text += Environment.NewLine + "Длина закодированного файла - " + countOfBitsEncoded / 8 + " байт = " + countOfBitsEncoded + " бит";
+            }            
+            outputTxtBlock.Text = "Длина закодированного файла - " + countOfBitsEncoded / 8 + " байт = " + countOfBitsEncoded + " бит";
+            outputTxtBlock.Text += Environment.NewLine + "Время кодирования - " + timeOfEncoding;
+        }
+
+        private void Timer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            timeOfEncoding++;
         }
 
         private void Buffer_SendByteToOutput(byte currBit, int bitOfCurrentByte)
@@ -143,54 +142,6 @@ namespace Кодер_LZW
                 BufferBytesChanged?.Invoke();             
             }
         }
-
-        //public byte[] FindCodeOfChain (List<byte> chain)
-        //{
-        //    foreach (Code currentCode in codeTable)
-        //    {
-        //        // имеет смысл проверять только те цепочки в таблице, у которых такая же длина
-        //        if (currentCode.Chain.Count == chain.Count)
-        //        {
-        //            bool isFound = true;
-
-        //            // сопоставляем байты цепочки в таблице с входной цепочкой
-        //            for (int i = 0; i < currentCode.Chain.Count; i++)
-        //            {
-        //                if (currentCode.Chain.ElementAt(i) != chain.ElementAt(i))  // если нашелся хоть один конфликт, эта цепочка таблицы нас не удовлетворяет
-        //                    isFound = false;
-        //            }
-        //            if (isFound) // если не нашлось противоречий, вернуть код для найденной цепочки
-        //            {
-        //                return currentCode.CodeOfChain;
-        //            }
-        //        }
-        //    }
-        //    return null; // после проверки всей таблицы вернуть false (не нашли ничего)
-        //}
-
-        //public bool SearchChainInCodeTable (List<byte> chain)
-        //{
-            
-        //    foreach (Code currentCode in codeTable)
-        //    {
-        //        // имеет смысл проверять только те цепочки в таблице, у которых такая же длина
-        //        if (currentCode.Chain.Count == chain.Count)
-        //        {
-        //            bool isFound = true;
-
-        //            // сопоставляем байты цепочки в таблице с входной цепочкой
-        //            for (int i = 0; i < currentCode.Chain.Count; i++)
-        //            {
-        //                if (currentCode.Chain.ElementAt(i) != chain.ElementAt(i))  // если нашелся хоть один конфликт, эта цепочка таблицы нас не удовлетворяет
-        //                    isFound = false;
-        //            }
-        //            if (isFound) // если не нашлось противоречий, вернуть true
-        //                return true;
-        //        }
-        //    }
-        //    return false; // после проверки всей тааблицы вернуть false (не нашли ничего)
-        //}
-
 
         public void InitialiseCodeTable ()
         {
@@ -242,14 +193,6 @@ namespace Кодер_LZW
                             array[j] = 1;
                         else array[j] = 0;
                     }
-
-                    //array = new byte[lengthOfCode];
-                    //for (int j = 0; j < array.Length; j++)
-                    //{
-                    //    if (j == (lengthOfCode - 8) - 1) // заполняем 9 бит (j = 12 - 9 = 3 при коде типа 0000 0000 0000
-                    //        array[j] = 1;
-                    //    else array[j] = 0;
-                    //}
                 }
             }
             return array;

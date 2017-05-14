@@ -19,14 +19,15 @@ namespace Кодер_LZW
         /// <summary>
         /// Поток вывода данных в файл
         /// </summary>
-        private BinaryWriter bWriter = new BinaryWriter(File.OpenWrite("outputLog.txt"));
+        private BinaryWriter bWriter;
 
         public List<byte> Bits { private set; get; }
         public byte CurrentByte { private set; get; }
         public byte CurrentBit { private set; get; }
         
-        public Bufer (byte size)
+        public Bufer (byte size, string filePath)
         {
+            bWriter = new BinaryWriter(File.OpenWrite(filePath));
             Bits = new List<byte>();
             CurrentByte = 0;
             CurrentBit = 0;
