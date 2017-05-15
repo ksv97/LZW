@@ -41,6 +41,7 @@ namespace Кодер_LZW
         int countOfBitsEncoded; // подсчет количества бит при кодировании        
         int timeOfEncoding;
         long fileLength;
+        byte[] fileBytes; // массив байтов из файла (для оптимизации работы)
         string filePath = "outputLog.txt";
         Dictionary<List<byte>, byte[]> codeTable;                 
 
@@ -63,78 +64,69 @@ namespace Кодер_LZW
             UpdateProgressBarDelegate updProgress = new UpdateProgressBarDelegate(pgBarEncoding.SetValue); // создать объект делегата обновления прогресс-бара           
 
             Stopwatch stopwatch = new Stopwatch();
-            //Timers.Timer timer = new Timers.Timer(1000);
             
             Bufer buffer = new Bufer(bufferSize, filePath);
-            //MessageBox.Show(buffer.GetHashCode().ToString() + " in Encode");
-
-            //timer.Elapsed += Timer_Elapsed;
-            //timer.Start();
 
             stopwatch.Start();
             InitialiseCodeTable(); // Сформировать корневую часть таблицы цепочек
             List<byte> prefix = new List<byte>(); // префикс = пустая строка
 
-            using (BinaryReader bReader = new BinaryReader(File.OpenRead(inputFile.FullName)))
-            {                
-                for (progress = 0; progress < fileLength;) // пока не конец входного потока, выполнять
+            foreach (byte currentByte in fileBytes)
+            {
+                // процедура создания цепочки prefix + символ
+                List<byte> prefixWithCurrentSymbol = new List<byte>();
+                foreach (byte b1 in prefix)
+                    prefixWithCurrentSymbol.Add(b1);
+                prefixWithCurrentSymbol.Add(currentByte);
+
+                if (codeTable.ContainsKey(prefixWithCurrentSymbol) == true) // если цепочка prefix + текущий символ присутствует в таблице цепочек
                 {
-                    byte currentByte = bReader.ReadByte();
-
-                    // процедура создания цепочки prefix + символ
-                    List<byte> prefixWithCurrentSymbol = new List<byte>();
-                    foreach (byte b1 in prefix)
-                        prefixWithCurrentSymbol.Add(b1);
-                    prefixWithCurrentSymbol.Add(currentByte);
-
-                    if (codeTable.ContainsKey(prefixWithCurrentSymbol) == true) // если цепочка prefix + текущий символ присутствует в таблице цепочек
-                    {
-                        prefix.Add(currentByte); // prefix = prefix + символ
-                    }
-                    else
-                    {
-                        byte[] outputCode = codeTable[prefix];
-                        OutputCodeOfChain(outputCode, buffer); // вывести код префикса в выходной поток, используя буфер
-
-                        // Исключить переполнение таблицы цепочек. Удалить динамическую часть таблицы при достижении максимума
-                        if (codeTable.Count == maxLengthOfCode * 256)
-                        {
-                            // удаление всех записей длиной больше двух
-                            for (int i = 256; i < codeTable.Keys.Count; i++)
-                            {
-                                List<byte> key = codeTable.Keys.ElementAt(i);
-                                codeTable.Remove(key);
-                            }
-                            lastCodeOfChain = new byte[] { 1, 0, 0, 0, 0, 0, 0, 0, 0 };
-                        }
-
-                        List<byte> newChain = new List<byte>();
-                        newChain = prefixWithCurrentSymbol.GetRange(0, prefixWithCurrentSymbol.Count); // кодируемая цепочка равна цепочке префикс + символ
-                        byte[] codeOfChain = new byte[lastCodeOfChain.Length]; // длина создаваемого массива равна длине последнего кода (т.к. он уже инкрементирован под нужное значение)
-                        lastCodeOfChain.CopyTo(codeOfChain, 0); // новый код равен логической инкрементации предыдущего кода в таблице (т.е. lastCodeOfChain)
-
-                        codeTable.Add(newChain, codeOfChain); // Добавить код для цепочки "префикс + символ" в таблицу кодов цепочек
-
-                        countOfBitsEncoded += outputCode.Length; // инкрементировать количество бит
-                        lastCodeOfChain = LogicIncementation(lastCodeOfChain); // сразу инкрементировать последний код
-
-                        // префикс = символ
-                        prefix.Clear();
-                        prefix.Add(currentByte);
-
-                    }
-
-                    if (progress == fileLength - 1) // если последний символ
-                    {
-
-                        // найти код в таблице для цепочки последнего байта и вывести в выходной поток с использованием буфера
-                        OutputCodeOfChain(codeTable[new List<byte>() { currentByte }], buffer);
-                        countOfBitsEncoded += 8;
-                    }
-
-                    Dispatcher.Invoke(updProgress, new object[] { ProgressBar.ValueProperty, ++progress }); // обновление прогресс-бара                    
+                    prefix.Add(currentByte); // prefix = prefix + символ
                 }
-            }                
+                else
+                {
+                    byte[] outputCode = codeTable[prefix];
+                    OutputCodeOfChain(outputCode, buffer); // вывести код префикса в выходной поток, используя буфер
+
+                    // Исключить переполнение таблицы цепочек. Удалить динамическую часть таблицы при достижении максимума
+                    if (codeTable.Count == maxLengthOfCode * 256)
+                    {
+                        // удаление всех записей длиной больше двух
+                        for (int i = 256; i < codeTable.Keys.Count; i++)
+                        {
+                            List<byte> key = codeTable.Keys.ElementAt(i);
+                            codeTable.Remove(key);
+                        }
+                        lastCodeOfChain = new byte[] { 1, 0, 0, 0, 0, 0, 0, 0, 0 };
+                    }
+
+                    List<byte> newChain = new List<byte>();
+                    newChain = prefixWithCurrentSymbol.GetRange(0, prefixWithCurrentSymbol.Count); // кодируемая цепочка равна цепочке префикс + символ
+                    byte[] codeOfChain = new byte[lastCodeOfChain.Length]; // длина создаваемого массива равна длине последнего кода (т.к. он уже инкрементирован под нужное значение)
+                    lastCodeOfChain.CopyTo(codeOfChain, 0); // новый код равен логической инкрементации предыдущего кода в таблице (т.е. lastCodeOfChain)
+
+                    codeTable.Add(newChain, codeOfChain); // Добавить код для цепочки "префикс + символ" в таблицу кодов цепочек
+
+                    countOfBitsEncoded += outputCode.Length; // инкрементировать количество бит
+                    lastCodeOfChain = LogicIncementation(lastCodeOfChain); // сразу инкрементировать последний код
+
+                    // префикс = символ
+                    prefix.Clear();
+                    prefix.Add(currentByte);
+
+                }
+
+                if (progress == fileLength - 1) // если последний символ
+                {
+
+                    // найти код в таблице для цепочки последнего байта и вывести в выходной поток с использованием буфера
+                    OutputCodeOfChain(codeTable[new List<byte>() { currentByte }], buffer);
+                    countOfBitsEncoded += 8;
+                }
+
+                Dispatcher.Invoke(updProgress, new object[] { ProgressBar.ValueProperty, ++progress }); // обновление прогресс-бара                    
+
+            }
             try
             {
                 InputStreamEnded?.Invoke();
@@ -145,13 +137,7 @@ namespace Кодер_LZW
             }
             stopwatch.Stop();
             timeOfEncoding = (int)stopwatch.ElapsedMilliseconds / 1000;
-            //timer.Stop();
          
-        }
-
-        private void Timer_Elapsed(object sender, Timers.ElapsedEventArgs e)
-        {
-            timeOfEncoding++;
         }
 
         /// <summary>
@@ -258,6 +244,8 @@ namespace Кодер_LZW
                 {
                     inputFile = new FileInfo(openFileDialog.FileName);
                     fileLength = inputFile.Length;
+                    fileBytes = File.ReadAllBytes(openFileDialog.FileName);
+
                     inputTxtBox.Text = "Длина исходного файла = " + fileLength + " байт = " + fileLength / 1024 + " кБайт";                    
                 }
                 catch (Exception ex)
@@ -278,7 +266,7 @@ namespace Кодер_LZW
                 BackgroundWorker worker = new BackgroundWorker();
                 worker.DoWork += Worker_DoWork;
                 worker.RunWorkerCompleted += Worker_RunWorkerCompleted;
-
+                
                 worker.RunWorkerAsync();
             }
             else
