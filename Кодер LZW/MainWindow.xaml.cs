@@ -215,8 +215,7 @@ namespace Кодер_LZW
 
         private void chooseFileBtn_Click(object sender, RoutedEventArgs e)
         {
-            inputTxtBox.Text = "";
-            outputTxtBlock.Text = "";
+
 
             OpenFileDialog openFileDialog = new OpenFileDialog()
             {
@@ -225,14 +224,16 @@ namespace Кодер_LZW
                 Title = "Выберите файл для кодирования"                
             };
             if (openFileDialog.ShowDialog() == true)
-            {                        
+            {
+                inputTxtBox.Text = "";
+                outputTxtBlock.Text = "";
                 try
                 {
                     inputFile = new FileInfo(openFileDialog.FileName);
                     fileLength = inputFile.Length;
-                    fileBytes = File.ReadAllBytes(openFileDialog.FileName);                    
-
-                    inputTxtBox.Text = "Длина исходного файла = " + fileLength + " байт = " + fileLength / 1024 + " кБайт";                    
+                    fileBytes = File.ReadAllBytes(openFileDialog.FileName);
+                    inputTxtBox.Text = "Кодируемый файл: " + openFileDialog.FileName;
+                    inputTxtBox.Text += Environment.NewLine + "Длина исходного файла = " + fileLength + " байт = " + fileLength / 1024 + " кБайт";                    
                 }
                 catch (Exception ex)
                 {
@@ -273,8 +274,7 @@ namespace Кодер_LZW
                     worker.RunWorkerAsync();
                 }
                 chooseFileBtn.IsEnabled = false;
-                encodeBtn.IsEnabled = false;
-                MessageBox.Show("BufSize = " + bufferSize + ", MaxCodeLen = " + maxLengthOfCode);
+                encodeBtn.IsEnabled = false;                
                 txtbxBufSize.IsReadOnly = true;
                 txtbxCodeLen.IsReadOnly = true;
             }
@@ -297,7 +297,8 @@ namespace Кодер_LZW
             encodeBtn.IsEnabled = true;
             txtbxBufSize.IsReadOnly = false;
             txtbxCodeLen.IsReadOnly = false;
-            outputTxtBlock.Text = "Длина закодированного файла = " + countOfBitsEncoded / 8 + " байт = " + countOfBitsEncoded / (8 * 1024) + "Кбайт";
+            outputTxtBlock.Text = "Закодированный файл: " + filePath;
+            outputTxtBlock.Text += Environment.NewLine + "Длина закодированного файла = " + countOfBitsEncoded / 8 + " байт = " + countOfBitsEncoded / (8 * 1024) + "Кбайт";
             outputTxtBlock.Text += Environment.NewLine + "Время кодирования - " + timeOfEncoding;            
         }
 

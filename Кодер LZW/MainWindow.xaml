@@ -9,15 +9,15 @@
         ResizeMode="NoResize"
         >
     <Canvas>
-        <ScrollViewer Height="40" Canvas.Left="10" Canvas.Top="10" Width="500">
+        <ScrollViewer Height="50" Canvas.Left="9" Canvas.Top="7" Width="500">
             <TextBox x:Name="inputTxtBox" Height="Auto" TextWrapping="Wrap" Text="Input text" Width="Auto" IsReadOnly="True"/>
         </ScrollViewer>
-        <ScrollViewer Height="60" Canvas.Left="9" Canvas.Top="55" Width="500" Background="#FFF7F7F7">
+        <ScrollViewer Height="65" Canvas.Left="9" Canvas.Top="63" Width="500" Background="#FFF7F7F7">
             <TextBox x:Name="outputTxtBlock" TextWrapping="Wrap" Text="Output text" IsReadOnly="True"/>
         </ScrollViewer>
-        <Button x:Name="encodeBtn" Content="Кодировать" Canvas.Left="10" Canvas.Top="130" Width="80" Height="21" Click="encodeBtn_Click"/>
-        <Button x:Name="chooseFileBtn" Content="Выбрать файл" Canvas.Left="95" Canvas.Top="131" Width="93" Click="chooseFileBtn_Click"/>
-        <ProgressBar  Name="pgBarEncoding" Height="20" Maximum="100" Canvas.Left="544" Canvas.Top="131" Width="185"/>
+        <Button x:Name="encodeBtn" Content="Кодировать" Canvas.Left="10" Canvas.Top="136" Width="80" Height="21" Click="encodeBtn_Click"/>
+        <Button x:Name="chooseFileBtn" Content="Выбрать файл" Canvas.Left="95" Canvas.Top="137" Width="93" Click="chooseFileBtn_Click"/>
+        <ProgressBar  Name="pgBarEncoding" Height="20" Maximum="100" Canvas.Left="544" Canvas.Top="137" Width="185"/>
         <Label x:Name="label" Content="Параметры кодирования" Canvas.Left="555" Canvas.Top="10"/>
         <TextBox x:Name="txtbxBufSize" Height="23" Canvas.Left="719" TextWrapping="Wrap" Text="6" Canvas.Top="54" Width="45" TextChanged="txtbxBufSize_TextChanged"/>
         <TextBox x:Name="txtbxCodeLen" Height="23" Canvas.Left="719" TextWrapping="Wrap" Text="11" Canvas.Top="93" Width="45" TextChanged="txtbxCodeLen_TextChanged"/>
