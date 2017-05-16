@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading;
+using System.Windows.Threading;
 using System.Windows;
 using System.ComponentModel;
 using System.Windows.Controls;
@@ -33,6 +33,7 @@ namespace Кодер_LZW
         public static event Action InputStreamEnded;
 
         FileInfo inputFile;
+        BackgroundWorker worker;
 
         const int maxLengthOfCode = 11;
         const byte bufferSize = 6;  // размер буфера в байтах      
@@ -40,10 +41,10 @@ namespace Кодер_LZW
         double progress = 0; // количество байтов, прочитанное в кодируемом файле
         int countOfBitsEncoded; // подсчет количества бит при кодировании        
         int timeOfEncoding;
-        long fileLength;
+        long fileLength; // длина файла
         byte[] fileBytes; // массив байтов из файла (для оптимизации работы)
-        string filePath = "outputLog.txt";
-        Dictionary<List<byte>, byte[]> codeTable;                 
+        string filePath = "";
+        Dictionary<List<byte>, byte[]> codeTable;        
 
         public MainWindow()
         {
@@ -61,11 +62,21 @@ namespace Кодер_LZW
 
         public void Encode ()
         {
-            UpdateProgressBarDelegate updProgress = new UpdateProgressBarDelegate(pgBarEncoding.SetValue); // создать объект делегата обновления прогресс-бара           
-
-            Stopwatch stopwatch = new Stopwatch();
-            
+            filePath = inputFile.FullName;
+            int indexOfPoint = -1;
+            for (int i = filePath.Length - 1; i > 0; i--)
+                if (filePath[i]== '.')
+                {
+                    indexOfPoint = i;
+                    break;
+                }
+            filePath.Remove(indexOfPoint);
+            filePath += ".lzw";
+            UpdateProgressBarDelegate updProgress = new UpdateProgressBarDelegate(pgBarEncoding.SetValue); // создать объект делегата обновления прогресс-бара                       
+            Stopwatch stopwatch = new Stopwatch();            
             Bufer buffer = new Bufer(bufferSize, filePath);
+            int countOfBytesForOnePercent = (int)fileLength / 100;
+            double percentProgress = 0;
 
             stopwatch.Start();
             InitialiseCodeTable(); // Сформировать корневую часть таблицы цепочек
@@ -124,8 +135,9 @@ namespace Кодер_LZW
                     countOfBitsEncoded += 8;
                 }
 
-                Dispatcher.Invoke(updProgress, new object[] { ProgressBar.ValueProperty, ++progress }); // обновление прогресс-бара                    
-
+                if (progress % countOfBytesForOnePercent == 0)                
+                    Dispatcher.Invoke(updProgress, new object[] { ProgressBar.ValueProperty, ++percentProgress }); // обновление прогресс-бара                    
+                
             }
             try
             {
@@ -244,7 +256,7 @@ namespace Кодер_LZW
                 {
                     inputFile = new FileInfo(openFileDialog.FileName);
                     fileLength = inputFile.Length;
-                    fileBytes = File.ReadAllBytes(openFileDialog.FileName);
+                    fileBytes = File.ReadAllBytes(openFileDialog.FileName);                    
 
                     inputTxtBox.Text = "Длина исходного файла = " + fileLength + " байт = " + fileLength / 1024 + " кБайт";                    
                 }
@@ -263,8 +275,9 @@ namespace Кодер_LZW
                 pgBarEncoding.Maximum = inputFile.Length;
                 pgBarEncoding.Value = 0;
                 outputTxtBlock.Text = "";
-                BackgroundWorker worker = new BackgroundWorker();
+                worker = new BackgroundWorker();
                 worker.DoWork += Worker_DoWork;
+                
                 worker.RunWorkerCompleted += Worker_RunWorkerCompleted;
                 
                 worker.RunWorkerAsync();

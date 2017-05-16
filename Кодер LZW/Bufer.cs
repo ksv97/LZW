@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Windows;
+using System.Text;
 
 namespace Кодер_LZW
 {
@@ -21,9 +22,12 @@ namespace Кодер_LZW
         public byte CurrentByte { private set; get; }
         public byte CurrentBit { private set; get; }
         
+
         public Bufer (byte size, string filePath)
         {
-            bWriter = new BinaryWriter(File.OpenWrite(filePath));
+
+            bWriter = new BinaryWriter(File.OpenWrite(filePath));            
+
             Bits = new List<byte>();
             CurrentByte = 0;
             CurrentBit = 0;
@@ -59,7 +63,8 @@ namespace Кодер_LZW
             }
             Output(); // вывести буфер в выходной поток
             MainWindow.BufferBytesChanged -= MainWindow_BufferBytesChanged;
-            MainWindow.BufferBytesChanged -= MainWindow_InputStreamEnded;            
+            MainWindow.BufferBytesChanged -= MainWindow_InputStreamEnded;
+            bWriter.Close();
             bWriter.Dispose();
         }
 
