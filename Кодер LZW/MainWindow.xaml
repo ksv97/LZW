@@ -20,6 +20,6 @@
             <TextBlock x:Name="codeTableTxtBlock" TextWrapping="Wrap" Text="Code table"/>
         </ScrollViewer>
         <Label x:Name="label" Content="Таблица цепочек" Canvas.Left="628" Canvas.Top="10" FontSize="16"/>
-        <ProgressBar  Name="pgBarEncoding" Height="15" Canvas.Left="639" Canvas.Top="475" Width="170"/>
+        <ProgressBar  Name="pgBarEncoding" Height="15" Maximum="100" Canvas.Left="639" Canvas.Top="475" Width="170"/>
     </Canvas>
 </Window>

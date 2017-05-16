@@ -21,6 +21,8 @@ using System.IO;
 namespace Кодер_LZW
 {
 
+    //ВАРИАНТ ОПТИМИЗАЦИИ - MemoryStream и fileBytes (см. ВК)
+    //
 
     delegate void UpdateProgressBarDelegate(DependencyProperty dp, object value);
 
@@ -52,26 +54,14 @@ namespace Кодер_LZW
             inputTxtBox.Text = "";
             outputTxtBlock.Text = "";
             codeTableTxtBlock.Text = "";
+            worker = new BackgroundWorker();
+            worker.DoWork += Worker_DoWork;
 
-        }
-
-        private void Worker_DoWork(object sender, DoWorkEventArgs e)
-        {
-            Encode();
+            worker.RunWorkerCompleted += Worker_RunWorkerCompleted;
         }
 
         public void Encode ()
         {
-            filePath = inputFile.FullName;
-            int indexOfPoint = -1;
-            for (int i = filePath.Length - 1; i > 0; i--)
-                if (filePath[i]== '.')
-                {
-                    indexOfPoint = i;
-                    break;
-                }
-            filePath.Remove(indexOfPoint);
-            filePath += ".lzw";
             UpdateProgressBarDelegate updProgress = new UpdateProgressBarDelegate(pgBarEncoding.SetValue); // создать объект делегата обновления прогресс-бара                       
             Stopwatch stopwatch = new Stopwatch();            
             Bufer buffer = new Bufer(bufferSize, filePath);
@@ -148,7 +138,7 @@ namespace Кодер_LZW
                 MessageBox.Show(ex.Message);
             }
             stopwatch.Stop();
-            timeOfEncoding = (int)stopwatch.ElapsedMilliseconds / 1000;
+            timeOfEncoding = (int)stopwatch.ElapsedMilliseconds / 1000 + 1; ;
          
         }
 
@@ -270,23 +260,38 @@ namespace Кодер_LZW
         private void encodeBtn_Click(object sender, RoutedEventArgs e)
         {
             if (inputFile != null)
-            { 
-                countOfBitsEncoded = 0;
-                pgBarEncoding.Maximum = inputFile.Length;
-                pgBarEncoding.Value = 0;
-                outputTxtBlock.Text = "";
-                worker = new BackgroundWorker();
-                worker.DoWork += Worker_DoWork;
+            {
+                SaveFileDialog saveFileDialog = new SaveFileDialog()
+                {
+                    OverwritePrompt = true,
+                    InitialDirectory = inputFile.DirectoryName,
+                    Title = "Выберите расположение закодированного файла",
+                    Filter = "Файл LZW (*.lzw)|*.lzw"
+                };
+
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    filePath = saveFileDialog.FileName;                   
+                    countOfBitsEncoded = 0;
+                    pgBarEncoding.Maximum = inputFile.Length;
+                    pgBarEncoding.Value = 0;
+                    outputTxtBlock.Text = "";
+
+                    worker.RunWorkerAsync();
+                }
                 
-                worker.RunWorkerCompleted += Worker_RunWorkerCompleted;
-                
-                worker.RunWorkerAsync();
             }
             else
             {
                 MessageBox.Show("Не выбран файл для кодирования! Пожалуйста, выберите файл, затем нажмите на кнопку \"Кодировать\"","Файл не выбран",MessageBoxButton.OK,MessageBoxImage.Error);
             }
 
+        }
+
+
+        private void Worker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            Encode();
         }
 
         private void Worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
