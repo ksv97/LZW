@@ -5,21 +5,23 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Кодер_LZW"
         mc:Ignorable="d"
-        Title="MainWindow" Height="538.395" Width="832.613"
+        Title="MainWindow" Height="200" Width="800"
+        ResizeMode="NoResize"
         >
     <Canvas>
-        <ScrollViewer Height="199" Canvas.Left="10" Canvas.Top="10" Width="553">
+        <ScrollViewer Height="40" Canvas.Left="10" Canvas.Top="10" Width="500">
             <TextBox x:Name="inputTxtBox" Height="Auto" TextWrapping="Wrap" Text="Input text" Width="Auto" IsReadOnly="True"/>
         </ScrollViewer>
-        <ScrollViewer Height="233" Canvas.Left="10" Canvas.Top="214" Width="553" Background="#FFF7F7F7">
-            <TextBlock x:Name="outputTxtBlock" TextWrapping="Wrap" Text="Output text"/>
+        <ScrollViewer Height="60" Canvas.Left="9" Canvas.Top="55" Width="500" Background="#FFF7F7F7">
+            <TextBox x:Name="outputTxtBlock" TextWrapping="Wrap" Text="Output text" IsReadOnly="True"/>
         </ScrollViewer>
-        <Button x:Name="encodeBtn" Content="Кодировать" Canvas.Left="10" Canvas.Top="468" Width="80" Height="21" Click="encodeBtn_Click"/>
-        <Button x:Name="chooseFileBtn" Content="Выбрать файл" Canvas.Left="95" Canvas.Top="469" Width="93" Click="chooseFileBtn_Click"/>
-        <ScrollViewer Height="395" Canvas.Left="568" Canvas.Top="52" Width="247" Background="#FFFFFDCA">
-            <TextBlock x:Name="codeTableTxtBlock" TextWrapping="Wrap" Text="Code table"/>
-        </ScrollViewer>
-        <Label x:Name="label" Content="Таблица цепочек" Canvas.Left="628" Canvas.Top="10" FontSize="16"/>
-        <ProgressBar  Name="pgBarEncoding" Height="15" Maximum="100" Canvas.Left="639" Canvas.Top="475" Width="170"/>
+        <Button x:Name="encodeBtn" Content="Кодировать" Canvas.Left="10" Canvas.Top="130" Width="80" Height="21" Click="encodeBtn_Click"/>
+        <Button x:Name="chooseFileBtn" Content="Выбрать файл" Canvas.Left="95" Canvas.Top="131" Width="93" Click="chooseFileBtn_Click"/>
+        <ProgressBar  Name="pgBarEncoding" Height="20" Maximum="100" Canvas.Left="544" Canvas.Top="131" Width="185"/>
+        <Label x:Name="label" Content="Параметры кодирования" Canvas.Left="555" Canvas.Top="10"/>
+        <TextBox x:Name="txtbxBufSize" Height="23" Canvas.Left="719" TextWrapping="Wrap" Text="6" Canvas.Top="54" Width="45" TextChanged="txtbxBufSize_TextChanged"/>
+        <TextBox x:Name="txtbxCodeLen" Height="23" Canvas.Left="719" TextWrapping="Wrap" Text="11" Canvas.Top="93" Width="45" TextChanged="txtbxCodeLen_TextChanged"/>
+        <Label x:Name="label_Copy" Content="Размер буфера в байтах" Canvas.Left="514" Canvas.Top="51"/>
+        <Label x:Name="label_Copy1" Content="Макс. длина кода цепочки в битах" Canvas.Left="514" Canvas.Top="89"/>
     </Canvas>
 </Window>

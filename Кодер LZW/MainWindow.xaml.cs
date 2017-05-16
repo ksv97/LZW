@@ -37,8 +37,8 @@ namespace Кодер_LZW
         FileInfo inputFile;
         BackgroundWorker worker;
 
-        const int maxLengthOfCode = 11;
-        const byte bufferSize = 6;  // размер буфера в байтах      
+        byte maxLengthOfCode;
+        byte bufferSize;  // размер буфера в байтах      
         byte[] lastCodeOfChain; // ничто иное как результат логической инкрементации последнего кода в таблице
         double progress = 0; // количество байтов, прочитанное в кодируемом файле
         int countOfBitsEncoded; // подсчет количества бит при кодировании        
@@ -53,7 +53,8 @@ namespace Кодер_LZW
             InitializeComponent();
             inputTxtBox.Text = "";
             outputTxtBlock.Text = "";
-            codeTableTxtBlock.Text = "";
+            byte.TryParse(txtbxBufSize.Text, out bufferSize);
+            byte.TryParse(txtbxCodeLen.Text, out maxLengthOfCode);
             worker = new BackgroundWorker();
             worker.DoWork += Worker_DoWork;
 
@@ -212,26 +213,8 @@ namespace Кодер_LZW
             return array;
         }
 
-        public void PrintCodeTable()
-        {
-            for (int i = 0; i < codeTable.Count; i++)
-            {
-                foreach (byte byteOfChain in codeTable.ElementAt(i).Key)
-                {
-                    codeTableTxtBlock.Text += byteOfChain + " ";
-                }
-                codeTableTxtBlock.Text += " = ";                
-                foreach (byte bit in codeTable.ElementAt(i).Value)
-                {
-                    codeTableTxtBlock.Text += bit;                    
-                }
-                codeTableTxtBlock.Text += Environment.NewLine;
-            }
-        }
-
         private void chooseFileBtn_Click(object sender, RoutedEventArgs e)
         {
-            codeTableTxtBlock.Text = "";
             inputTxtBox.Text = "";
             outputTxtBlock.Text = "";
 
@@ -291,6 +274,9 @@ namespace Кодер_LZW
                 }
                 chooseFileBtn.IsEnabled = false;
                 encodeBtn.IsEnabled = false;
+                MessageBox.Show("BufSize = " + bufferSize + ", MaxCodeLen = " + maxLengthOfCode);
+                txtbxBufSize.IsReadOnly = true;
+                txtbxCodeLen.IsReadOnly = true;
             }
             else
             {
@@ -309,9 +295,22 @@ namespace Кодер_LZW
         {
             chooseFileBtn.IsEnabled = true;
             encodeBtn.IsEnabled = true;
+            txtbxBufSize.IsReadOnly = false;
+            txtbxCodeLen.IsReadOnly = false;
             outputTxtBlock.Text = "Длина закодированного файла = " + countOfBitsEncoded / 8 + " байт = " + countOfBitsEncoded / (8 * 1024) + "Кбайт";
-            outputTxtBlock.Text += Environment.NewLine + "Время кодирования - " + timeOfEncoding;
-            PrintCodeTable();
+            outputTxtBlock.Text += Environment.NewLine + "Время кодирования - " + timeOfEncoding;            
+        }
+
+        private void txtbxBufSize_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (byte.TryParse(txtbxBufSize.Text, out bufferSize) == false)
+                bufferSize = 6;// dfault     
+        }
+
+        private void txtbxCodeLen_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (byte.TryParse(txtbxCodeLen.Text, out maxLengthOfCode) == false)
+                maxLengthOfCode = 12;// dfault
         }
     }
 }
