@@ -125,6 +125,7 @@ namespace Кодер_LZW
                     countOfBitsEncoded += 8;
                 }
 
+                progress++;
                 if (progress % countOfBytesForOnePercent == 0)                
                     Dispatcher.Invoke(updProgress, new object[] { ProgressBar.ValueProperty, ++percentProgress }); // обновление прогресс-бара                    
                 
@@ -268,18 +269,28 @@ namespace Кодер_LZW
                     Title = "Выберите расположение закодированного файла",
                     Filter = "Файл LZW (*.lzw)|*.lzw"
                 };
-
+                
                 if (saveFileDialog.ShowDialog() == true)
                 {
-                    filePath = saveFileDialog.FileName;                   
+                    filePath = saveFileDialog.FileName;
+                    if (File.Exists(saveFileDialog.FileName))
+                        try
+                        {
+                            File.Delete(filePath);
+                        }
+                        catch (FileNotFoundException ex)
+                        {
+                            MessageBox.Show(ex.Message);
+                        }                    
                     countOfBitsEncoded = 0;
-                    pgBarEncoding.Maximum = inputFile.Length;
+                    //pgBarEncoding.Maximum = inputFile.Length;
                     pgBarEncoding.Value = 0;
                     outputTxtBlock.Text = "";
 
                     worker.RunWorkerAsync();
                 }
-                
+                chooseFileBtn.IsEnabled = false;
+                encodeBtn.IsEnabled = false;
             }
             else
             {
@@ -296,6 +307,8 @@ namespace Кодер_LZW
 
         private void Worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
+            chooseFileBtn.IsEnabled = true;
+            encodeBtn.IsEnabled = true;
             outputTxtBlock.Text = "Длина закодированного файла = " + countOfBitsEncoded / 8 + " байт = " + countOfBitsEncoded / (8 * 1024) + "Кбайт";
             outputTxtBlock.Text += Environment.NewLine + "Время кодирования - " + timeOfEncoding;
             PrintCodeTable();

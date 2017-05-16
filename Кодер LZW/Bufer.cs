@@ -21,11 +21,11 @@ namespace Кодер_LZW
         public List<byte> Bits { private set; get; }
         public byte CurrentByte { private set; get; }
         public byte CurrentBit { private set; get; }
-        
+        private string filePath;
 
         public Bufer (byte size, string filePath)
         {
-
+            this.filePath = filePath;
             bWriter = new BinaryWriter(File.OpenWrite(filePath));            
 
             Bits = new List<byte>();
@@ -61,6 +61,10 @@ namespace Кодер_LZW
                 Bits.AddRange(lastByteMask);
                 //MessageBox.Show(this.GetHashCode().ToString() + " in InputStreamEnded");
             }
+
+            // КОСТЫЛЬ!!!
+
+
             Output(); // вывести буфер в выходной поток
             MainWindow.BufferBytesChanged -= MainWindow_BufferBytesChanged;
             MainWindow.BufferBytesChanged -= MainWindow_InputStreamEnded;
@@ -94,8 +98,16 @@ namespace Кодер_LZW
                 CurrentByte += (byte)(b * (int)Math.Pow(2, CurrentBit));
                 if (++CurrentBit == 8)
                 {
-                   // MessageBox.Show(this.GetHashCode().ToString() + " in Output");
-                    bWriter.Write(CurrentByte);
+                    // MessageBox.Show(this.GetHashCode().ToString() + " in Output");
+                    try
+                    {
+                        bWriter.Write(CurrentByte);
+                    }
+                    catch (ObjectDisposedException ex)
+                    {
+                        this.bWriter = new BinaryWriter(File.OpenWrite(filePath));
+                        bWriter.Seek(1, SeekOrigin.End);
+                    }                    
                     CurrentBit = 0;
                     CurrentByte = 0;
                 }
