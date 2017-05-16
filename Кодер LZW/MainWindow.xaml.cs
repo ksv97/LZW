@@ -35,6 +35,7 @@ namespace Кодер_LZW
         public static event Action InputStreamEnded;
 
         FileInfo inputFile;
+        FileInfo log;
         BackgroundWorker worker;
 
         byte maxLengthOfCode;
@@ -53,6 +54,7 @@ namespace Кодер_LZW
             InitializeComponent();
             inputTxtBox.Text = "";
             outputTxtBlock.Text = "";
+            log = new FileInfo("log.txt");
             byte.TryParse(txtbxBufSize.Text, out bufferSize);
             byte.TryParse(txtbxCodeLen.Text, out maxLengthOfCode);
             worker = new BackgroundWorker();
@@ -232,8 +234,16 @@ namespace Кодер_LZW
                     inputFile = new FileInfo(openFileDialog.FileName);
                     fileLength = inputFile.Length;
                     fileBytes = File.ReadAllBytes(openFileDialog.FileName);
-                    inputTxtBox.Text = "Кодируемый файл: " + openFileDialog.FileName;
-                    inputTxtBox.Text += Environment.NewLine + "Длина исходного файла = " + fileLength + " байт = " + fileLength / 1024 + " кБайт";                    
+
+                    string str1 = "Кодируемый файл: " + openFileDialog.FileName;
+                    string str2 = "Длина исходного файла = " + fileLength + " байт = " + fileLength / 1024 + " кБайт";
+                    using (StreamWriter sWriter = File.AppendText(log.FullName))
+                    {
+                        sWriter.WriteLine(str1);
+                        sWriter.WriteLine(str2);
+                    }
+                    inputTxtBox.Text = str1;
+                    inputTxtBox.Text += Environment.NewLine + str2;                   
                 }
                 catch (Exception ex)
                 {
@@ -297,9 +307,20 @@ namespace Кодер_LZW
             encodeBtn.IsEnabled = true;
             txtbxBufSize.IsReadOnly = false;
             txtbxCodeLen.IsReadOnly = false;
-            outputTxtBlock.Text = "Закодированный файл: " + filePath;
-            outputTxtBlock.Text += Environment.NewLine + "Длина закодированного файла = " + countOfBitsEncoded / 8 + " байт = " + countOfBitsEncoded / (8 * 1024) + "Кбайт";
-            outputTxtBlock.Text += Environment.NewLine + "Время кодирования - " + timeOfEncoding;            
+            string str1 = "Закодированный файл: " + filePath;
+            string str2 = "Длина закодированного файла = " + countOfBitsEncoded / 8 + " байт = " + countOfBitsEncoded / (8 * 1024) + "Кбайт";
+            string str3 = "Время кодирования - " + timeOfEncoding;
+            using (StreamWriter sWriter = File.AppendText(log.FullName))
+            {
+                sWriter.WriteLine("Размер буфера = " + bufferSize + " байт");
+                sWriter.WriteLine("Макс.длина кода цепочки = " + maxLengthOfCode + " бит");
+                sWriter.WriteLine(str1);
+                sWriter.WriteLine(str2);
+                sWriter.WriteLine(str3);
+            }
+            outputTxtBlock.Text = str1;
+            outputTxtBlock.Text += Environment.NewLine + str2;
+            outputTxtBlock.Text += Environment.NewLine + str3;            
         }
 
         private void txtbxBufSize_TextChanged(object sender, TextChangedEventArgs e)
